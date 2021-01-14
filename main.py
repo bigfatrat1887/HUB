@@ -1,48 +1,38 @@
 import pygame
-import random
 import sys
 
 
-fps = 15
+fps = 60
 clock = pygame.time.Clock()
 
 
-class Board:
-    def __init__(self, width=8, height=8, cellsize=50):
+class Board():
+    def __init__(self, width, height, cellsize=50):
         self.width = width
         self.height = height
         self.cellsize = cellsize
-        self.board = [['-'] * width for _ in range(height)]
+        self.board = [['-'] * self.width for _ in range(self.height)]
+        self.left = 150
+        self.top = 150
 
-        self.left = 0
-        self.top = 0
-        self.tremor = 1
-        self.count = 0
+        self.rune = 'cross'
+        self.player = 0
 
-        self.color_dict = {'g': 'green', 'p': 'purple', 'o': 'orange', 'r': 'red', 't': 'turquoise'}
+        self.win = False
+        self.winner = None
+        self.move = 0
 
     def draw(self):
         start_coord = [self.left, self.top]
-        color_list = ['g', 'p', 'o', 'r', 't']
         for i in range(self.height):
             for j in range(self.width):
-                pygame.draw.rect(screen, 'grey', [start_coord[0], start_coord[1], self.cellsize,
+                pygame.draw.rect(screen, pygame.Color('white'), [start_coord[0], start_coord[1], self.cellsize,
                                                                  self.cellsize], 1)
-                color_balls = random.choice(color_list)
-                self.board[i][j] = color_balls
-
-                while self.check_neighbors((j, i)):
-                    color_balls = random.choice(color_list)
-                    self.board[i][j] = color_balls
-
-                pygame.draw.circle(screen, self.color_dict[color_balls], [start_coord[0] + self.cellsize // 2,
-                                                                     start_coord[1] + self.cellsize // 2],
-                                   self.cellsize // 2 - 5)
-
-                self.board[i][j] = color_balls
                 start_coord[0] += self.cellsize
             start_coord[0] = self.left
             start_coord[1] += self.cellsize
+        pygame.draw.line(screen, 'blue', (5, 5), (self.cellsize - 5, self.cellsize - 5), 2)
+        pygame.draw.line(screen, 'blue', (5, self.cellsize - 5), (self.cellsize - 5, 5), 2)
 
     def coord(self, position):
         first = ((position[0] - self.left) // self.cellsize)
@@ -52,402 +42,288 @@ class Board:
         else:
             return None
 
-    def check_neighbors(self, pos):
-        x, y = pos
-
-        bottom = False
-        if y + 2 < self.height:
-            if self.board[y][x] == self.board[y + 1][x] == self.board[y + 2][x]:
-                bottom = True
-        top = False
-        if y - 2 >= 0:
-            if self.board[y - 2][x] == self.board[y - 1][x] == self.board[y][x]:
-                top = True
-        center_vertical = False
-        if 0 < y < self.height - 1:
-            if self.board[y - 1][x] == self.board[y][x] == self.board[y + 1][x]:
-                center_vertical = True
-        right = False
-        if x + 2 < self.width:
-            if self.board[y][x] == self.board[y][x + 1] == self.board[y][x + 2]:
-                right = True
-        left = False
-        if x - 2 >= 0:
-            if self.board[y][x - 2] == self.board[y][x - 1] == self.board[y][x]:
-                left = True
-        center_horizontal = False
-        if 0 < x < self.width - 1:
-            if self.board[y][x - 1] == self.board[y][x] == self.board[y][x + 1]:
-                center_horizontal = True
-        result = []
-        if top:
-            result.append('T')
-        if bottom:
-            result.append('B')
-        if center_vertical:
-            result.append('C_V')
-        if left:
-            result.append('L')
-        if right:
-            result.append('R')
-        if center_horizontal:
-            result.append('C_H')
-        if result:
-            return result
-        else:
+    def cross_zero(self, pos):
+        if self.win:
             return False
-
-    def wait_move(self, pos, rune=False):
-        x, y = pos
-        pygame.draw.rect(screen, 'black', (self.cellsize * x + 2, self.cellsize * y + 2, self.cellsize - 2,
-                                           self.cellsize - 2))
-
-        if rune:
-            pygame.draw.circle(screen, self.color_dict[self.board[y][x]], [self.cellsize * x + self.cellsize // 2,
-                                                                      self.cellsize * y + self.cellsize // 2],
-                               self.cellsize // 2 - 5)
-            self.tremor = 1
-        else:
-            if self.tremor == 1:
-                self.direction = -1
-                self.tremor = 0
-                pygame.draw.circle(screen, self.color_dict[self.board[y][x]], [self.cellsize * x + self.cellsize // 2,
-                                                                          self.cellsize * y + self.cellsize // 2 - 3],
-                                   self.cellsize // 2 - 5)
-            elif self.tremor == 0:
-                if self.direction == 1:
-                    self.tremor = 1
-                elif self.direction == -1:
-                    self.tremor = -1
-                pygame.draw.circle(screen, self.color_dict[self.board[y][x]], [self.cellsize * x + self.cellsize // 2,
-                                                                          self.cellsize * y + self.cellsize // 2],
-                                   self.cellsize // 2 - 5)
-            elif self.tremor == -1:
-                self.direction = 1
-                self.tremor = 0
-                pygame.draw.circle(screen, self.color_dict[self.board[y][x]], [self.cellsize * x + self.cellsize // 2,
-                                                                          self.cellsize * y + self.cellsize // 2 + 3],
-                                   self.cellsize // 2 - 5)
-
-    def move(self, pos_1, pos_2):
-        if pos_1 != pos_2:
-            if ((pos_1[0] - pos_2[0] == 1 or pos_1[0] - pos_2[0] == -1) and pos_1[1] == pos_2[1]) or \
-                    ((pos_1[1] - pos_2[1] == 1 or pos_1[1] - pos_2[1] == -1) and pos_1[0] == pos_2[0]):
-                if pos_1[0] != pos_2[0]:
-                    if pos_1[0] > pos_2[0]:
-                        step = -5
-                    else:
-                        step = 5
-                    for i in range(1, 11):
-                        pygame.draw.rect(screen, 'black',
-                                         (self.cellsize * pos_1[0] + 2, self.cellsize * pos_1[1] + 2,
-                                          self.cellsize - 2, self.cellsize - 2))
-                        pygame.draw.rect(screen, 'black',
-                                         (self.cellsize * pos_2[0] + 2, self.cellsize * pos_2[1] + 2,
-                                          self.cellsize - 2, self.cellsize - 2))
-                        pygame.draw.circle(screen, self.color_dict[self.board[pos_1[1]][pos_1[0]]],
-                                           [self.cellsize * pos_1[0] + self.cellsize // 2 + step * i,
-                                            self.cellsize * pos_1[1] + self.cellsize // 2],
-                                           self.cellsize // 2 - 5)
-                        pygame.draw.circle(screen, self.color_dict[self.board[pos_2[1]][pos_2[0]]],
-                                           [self.cellsize * pos_2[0] + self.cellsize // 2 - step * i,
-                                            self.cellsize * pos_2[1] + self.cellsize // 2],
-                                           self.cellsize // 2 - 5)
-                        pygame.display.flip()
-                    pygame.draw.line(screen, 'grey', (pos_1[0] * self.cellsize, pos_1[1] * self.cellsize),
-                                     (pos_1[0] * self.cellsize, (pos_1[1] + 1) * self.cellsize), 2)
-                    pygame.draw.line(screen, 'grey', (pos_2[0] * self.cellsize, pos_2[1] * self.cellsize),
-                                     (pos_2[0] * self.cellsize, (pos_2[1] + 1) * self.cellsize), 2)
-                    self.board[pos_1[1]][pos_1[0]], self.board[pos_2[1]][pos_2[0]], = self.board[pos_2[1]][pos_2[0]], \
-                                                                                      self.board[pos_1[1]][pos_1[0]]
-                elif pos_1[1] != pos_2[1]:
-                    if pos_1[1] > pos_2[1]:
-                        step = -5
-                    else:
-                        step = 5
-                    for i in range(1, 11):
-                        pygame.draw.rect(screen, 'black',
-                                         (self.cellsize * pos_1[0] + 2, self.cellsize * pos_1[1] + 2,
-                                          self.cellsize - 2, self.cellsize - 2))
-                        pygame.draw.rect(screen, 'black',
-                                         (self.cellsize * pos_2[0] + 2, self.cellsize * pos_2[1] + 2,
-                                          self.cellsize - 2, self.cellsize - 2))
-                        pygame.draw.circle(screen, self.color_dict[self.board[pos_1[1]][pos_1[0]]],
-                                           [self.cellsize * pos_1[0] + self.cellsize // 2,
-                                            self.cellsize * pos_1[1] + self.cellsize // 2 + step * i],
-                                           self.cellsize // 2 - 5)
-                        pygame.draw.circle(screen, self.color_dict[self.board[pos_2[1]][pos_2[0]]],
-                                           [self.cellsize * pos_2[0] + self.cellsize // 2,
-                                            self.cellsize * pos_2[1] + self.cellsize // 2 - step * i],
-                                           self.cellsize // 2 - 5)
-                        pygame.display.flip()
-                    pygame.draw.line(screen, 'grey', (pos_1[0] * self.cellsize, pos_1[1] * self.cellsize),
-                                     ((pos_1[0] + 1) * self.cellsize, pos_1[1] * self.cellsize), 2)
-                    pygame.draw.line(screen, 'grey', (pos_2[0] * self.cellsize, pos_2[1] * self.cellsize),
-                                     ((pos_2[0] + 1) * self.cellsize, pos_2[1] * self.cellsize), 2)
-                    self.board[pos_1[1]][pos_1[0]], self.board[pos_2[1]][pos_2[0]] = self.board[pos_2[1]][pos_2[0]], \
-                                                                                      self.board[pos_1[1]][pos_1[0]]
-                retired_1 = self.calculation_retired(pos_1)
-                retired_2 = self.calculation_retired(pos_2)
-                if retired_1 or retired_2:
-                    if retired_1:
-                        retired_1 = self.rebuild(retired_1)
-                        for i in retired_1:
-                            self.change_row(i)
-                    if retired_2:
-                        retired_2 = self.rebuild(retired_2)
-                        for i in retired_2:
-                            self.change_row(i)
-
-                    while self.check():
-                        self.check()
-
-                    return True
-                else:
-                    if pos_1[0] != pos_2[0]:
-                        if pos_1[0] > pos_2[0]:
-                            step = -5
-                        else:
-                            step = 5
-                        for i in range(1, 11):
-                            pygame.draw.rect(screen, 'black',
-                                             (self.cellsize * pos_1[0] + 2, self.cellsize * pos_1[1] + 2,
-                                              self.cellsize - 2, self.cellsize - 2))
-                            pygame.draw.rect(screen, 'black',
-                                             (self.cellsize * pos_2[0] + 2, self.cellsize * pos_2[1] + 2,
-                                              self.cellsize - 2, self.cellsize - 2))
-                            pygame.draw.circle(screen, self.color_dict[self.board[pos_1[1]][pos_1[0]]],
-                                               [self.cellsize * pos_1[0] + self.cellsize // 2 + step * i,
-                                                self.cellsize * pos_1[1] + self.cellsize // 2],
-                                               self.cellsize // 2 - 5)
-                            pygame.draw.circle(screen, self.color_dict[self.board[pos_2[1]][pos_2[0]]],
-                                               [self.cellsize * pos_2[0] + self.cellsize // 2 - step * i,
-                                                self.cellsize * pos_2[1] + self.cellsize // 2],
-                                               self.cellsize // 2 - 5)
-                            pygame.display.flip()
-                        pygame.draw.line(screen, 'grey', (pos_1[0] * self.cellsize, pos_1[1] * self.cellsize),
-                                         (pos_1[0] * self.cellsize, (pos_1[1] + 1) * self.cellsize), 2)
-                        pygame.draw.line(screen, 'grey', (pos_2[0] * self.cellsize, pos_2[1] * self.cellsize),
-                                         (pos_2[0] * self.cellsize, (pos_2[1] + 1) * self.cellsize), 2)
-                        self.board[pos_1[1]][pos_1[0]], self.board[pos_2[1]][pos_2[0]] = \
-                            self.board[pos_2[1]][pos_2[0]], self.board[pos_1[1]][pos_1[0]]
-                    elif pos_1[1] != pos_2[1]:
-                        if pos_1[1] > pos_2[1]:
-                            step = -5
-                        else:
-                            step = 5
-                        for i in range(1, 11):
-                            pygame.draw.rect(screen, 'black',
-                                             (self.cellsize * pos_1[0] + 2, self.cellsize * pos_1[1] + 2,
-                                              self.cellsize - 2, self.cellsize - 2))
-                            pygame.draw.rect(screen, 'black',
-                                             (self.cellsize * pos_2[0] + 2, self.cellsize * pos_2[1] + 2,
-                                              self.cellsize - 2, self.cellsize - 2))
-                            pygame.draw.circle(screen, self.color_dict[self.board[pos_1[1]][pos_1[0]]],
-                                               [self.cellsize * pos_1[0] + self.cellsize // 2,
-                                                self.cellsize * pos_1[1] + self.cellsize // 2 + step * i],
-                                               self.cellsize // 2 - 5)
-                            pygame.draw.circle(screen, self.color_dict[self.board[pos_2[1]][pos_2[0]]],
-                                               [self.cellsize * pos_2[0] + self.cellsize // 2,
-                                                self.cellsize * pos_2[1] + self.cellsize // 2 - step * i],
-                                               self.cellsize // 2 - 5)
-                            pygame.display.flip()
-                        pygame.draw.line(screen, 'grey', (pos_1[0] * self.cellsize, pos_1[1] * self.cellsize),
-                                         ((pos_1[0] + 1) * self.cellsize, pos_1[1] * self.cellsize), 2)
-                        pygame.draw.line(screen, 'grey', (pos_2[0] * self.cellsize, pos_2[1] * self.cellsize),
-                                         ((pos_2[0] + 1) * self.cellsize, pos_2[1] * self.cellsize), 2)
-                        self.board[pos_1[1]][pos_1[0]], self.board[pos_2[1]][pos_2[0]] = self.board[pos_2[1]][pos_2[0]], \
-                                                                                         self.board[pos_1[1]][pos_1[0]]
-                    return False
-            else:
-                return False
-        else:
-            return False
-
-    def calculation_retired(self, pos):
-        row = self.check_neighbors(pos)
-        x, y = pos
-        if row:
-            list_point = [pos]
-            color = self.board[y][x]
-            if 'T' in row or 'B' in row or 'C_V' in row:
-                for i in range(1, self.height):
-                    if y - i >= 0:
-                        if self.board[y - i][x] == color:
-                            list_point.append((x, y - i))
-                        else:
-                            break
-                    else:
-                        break
-                for i in range(1, self.height):
-                    if y + i < self.height:
-                        if self.board[y + i][x] == color:
-                            list_point.append((x, y + i))
-                        else:
-                            break
-                    else:
-                        break
-            if 'L' in row or 'R' in row or 'C_H' in row:
-                for i in range(1, self.width):
-                    if x - i >= 0:
-                        if self.board[y][x - i] == color:
-                            list_point.append((x - i, y))
-                        else:
-                            break
-                    else:
-                        break
-                for i in range(1, self.width):
-                    if x + i < self.width:
-                        if self.board[y][x + i] == color:
-                            list_point.append((x + i, y))
-                        else:
-                            break
-                    else:
-                        break
-            return list_point
-        else:
-            return False
-
-    def refresh(self, pos):
-        x, y = pos
-        pygame.draw.rect(screen, 'black',
-                         (self.cellsize * x + 2, self.cellsize * y + 2,
-                          self.cellsize - 2, self.cellsize - 2))
-        pygame.draw.circle(screen, self.color_dict[self.board[y][x]],
-                           [self.cellsize * x + self.cellsize // 2,
-                            self.cellsize * y + self.cellsize // 2],
-                           self.cellsize // 2 - 5)
-
-    def change_row(self, pos):
-        self.count += 1
-        color_list = ['g', 'p', 'o', 'r', 't']
-        x, y = pos
-        for j in range(1, self.height):
-            if y - j >= 0:
-                for i in range(11):
-                    pygame.draw.rect(screen, 'black', [50 * x + 2, 50 * (y - j) + 1, 46, 48])
-                    pygame.draw.rect(screen, 'black', [50 * x + 2, 50 * (y - j + 1) + 1, 46, 48])
-                    pygame.draw.rect(screen, 'grey', [50 * x, 50 * (y - j), 50, 50], 2)
-                    pygame.draw.rect(screen, 'grey', [50 * x, 50 * (y - j + 1), 50, 50], 2)
-                    pygame.draw.circle(screen, self.color_dict[self.board[y - j][x]],
-                                       [self.cellsize * x + self.cellsize // 2,
-                                        self.cellsize * (y - j) + self.cellsize // 2 + i * 5],
-                                       self.cellsize // 2 - 5)
+        if not pos == None:
+            x, y = pos
+            start_coord = [self.left + self.cellsize * x, self.top + self.cellsize * y]
+            if self.board[y][x] == '-':
+                if self.rune == 'cross':
+                    pygame.draw.line(screen, pygame.Color('blue'), (start_coord[0] + 2, start_coord[1] + 2),
+                                     (start_coord[0] - 2 + self.cellsize, start_coord[1] - 2 + self.cellsize), 2)
+                    pygame.draw.line(screen, pygame.Color('blue'), (start_coord[0] + 2,
+                                                                    start_coord[1] + self.cellsize - 2),
+                                     (start_coord[0] - 2 + self.cellsize, start_coord[1] + 2), 2)
+                    self.board[y][x] = 'x'
+                    self.rune = 'zero'
+                    pygame.draw.rect(screen, 'black', (0, 0, self.cellsize + 5, self.cellsize + 5))
+                    pygame.draw.circle(screen, pygame.Color('red'), (self.cellsize // 2, self.cellsize // 2),
+                                       self.cellsize // 2 - 2, 2)
+                elif self.rune == 'zero':
+                    pygame.draw.circle(screen, pygame.Color('red'), (start_coord[0] + self.cellsize // 2,
+                                                                     start_coord[1] + self.cellsize // 2),
+                                       self.cellsize // 2 - 2, 2)
+                    self.board[y][x] = 'o'
+                    self.rune = 'cross'
+                    pygame.draw.rect(screen, 'black', (0, 0, self.cellsize + 5, self.cellsize + 5))
+                    pygame.draw.line(screen, 'blue', (5, 5), (self.cellsize - 5, self.cellsize - 5), 2)
+                    pygame.draw.line(screen, 'blue', (5, self.cellsize - 5), (self.cellsize - 5, 5), 2)
+                if self.chech_win():
                     pygame.display.flip()
-                    clock.tick(120)
-                self.board[y - j + 1][x] = self.board[y - j][x]
-            if y - j == 0 or y == 0:
-                color_balls = random.choice(color_list)
-                self.board[0][x] = color_balls
-                pygame.draw.circle(screen, self.color_dict[color_balls],
-                                   [self.cellsize * x + self.cellsize // 2, self.cellsize // 2],
-                                   self.cellsize // 2 - 5)
-    def rebuild(self, list_point):
-        for i in range(len(list_point)):
-            for j in range(len(list_point) - i - 1):
-                if list_point[j][1] > list_point[j + 1][1]:
-                    list_point[j], list_point[j + 1] = list_point[j + 1], list_point[j]
-        return list_point
-
-    def check(self):
-        for i in range(self.height):
-            for j in range(self.width):
-                points = self.calculation_retired((j, i))
-                if points:
-                    for _ in points:
-                        self.change_row(_)
-                    return True
+                    self.game_over()
+                return True
         return False
 
-    def account(self):
-        pygame.draw.rect(screen, 'black', (400, 0, 100, 100))
-        font = pygame.font.Font(None, 30)
-        text = font.render(str(self.count), True, 'grey')
-        text_x = 440
-        text_y = 50
-        screen.blit(text, (text_x, text_y))
 
-        pygame.draw.rect(screen, 'red', (405, 350, 90, 20), 1)
-        font = pygame.font.Font(None, 30)
-        text = font.render('сдаться', True, 'red')
-        text_x = 410
-        text_y = 350
-        screen.blit(text, (text_x, text_y))
+    def chech_win(self):
+        if self.win:
+            return True
 
-    def goodbye(self):
+        if self.board[0].count('x') == 3 or self.board[1].count('x') == 3 or self.board[2].count('x') == 3:
+            self.winner = 'x'
+        elif self.board[0].count('o') == 3 or self.board[1].count('o') == 3 or self.board[2].count('o') == 3:
+            self.winner = 'o'
+        elif self.board[0][0] == self.board[0][1] == self.board[0][2]:
+            if self.board[0][0] == 'x':
+                self.winner = 'x'
+            elif self.board[0][0] == 'o':
+                self.winner = 'o'
+        elif self.board[1][0] == self.board[1][1] == self.board[1][2]:
+            if self.board[1][0] == 'x':
+                self.winner = 'x'
+            elif self.board[1][0] == 'o':
+                self.winner = 'o'
+        elif self.board[2][0] == self.board[2][1] == self.board[2][2]:
+            if self.board[2][0] == 'x':
+                self.winner = 'x'
+            elif self.board[2][0] == 'o':
+                self.winner = 'o'
+        elif self.board[0][0] == self.board[1][0] == self.board[2][0]:
+            if self.board[0][0] == 'x':
+                self.winner = 'x'
+            elif self.board[0][0] == 'o':
+                self.winner = 'o'
+        elif self.board[0][1] == self.board[1][1] == self.board[2][1]:
+            if self.board[0][1] == 'x':
+                self.winner = 'x'
+            elif self.board[0][1] == 'o':
+                self.winner = 'o'
+        elif self.board[0][2] == self.board[1][2] == self.board[2][2]:
+            if self.board[0][2] == 'x':
+                self.winner = 'x'
+            elif self.board[0][2] == 'o':
+                self.winner = 'o'
+        elif self.board[0][0] == self.board[1][1] == self.board[2][2]:
+            if self.board[0][0] == 'x':
+                self.winner = 'x'
+            elif self.board[0][0] == 'o':
+                self.winner = 'o'
+        elif self.board[0][2] == self.board[1][1] == self.board[2][0]:
+            if self.board[0][2] == 'x':
+                self.winner = 'x'
+            elif self.board[0][2] == 'o':
+                self.winner = 'o'
+        elif self.board[0].count('-') == 0 and self.board[1].count('-') == 0 and self.board[2].count('-') == 0:
+            self.winner = '-'
+
+        if not (self.winner is None):
+            self.win = True
+            return True
+
+    def game_over(self):
+        clock.tick(3)
         screen.fill('black')
-        if self.count >= 100:
-            font = pygame.font.Font(None, 40)
-            text = font.render('УХ ты, {} очков'.format(self.count), True, (255, 215, 0))
-            text_x = 30
-            text_y = 150
-            screen.blit(text, (text_x, text_y))
+        font = pygame.font.Font(None, 100)
 
-            font = pygame.font.Font(None, 40)
-            text = font.render('Весьма неплохо'.format(self.count), True, (245, 245, 220))
-            text_x = 80
-            text_y = 200
-            screen.blit(text, (text_x, text_y))
+        if self.winner == 'x':
+            text = font.render('"X" is winner', True, (0, 0, 255))
 
-            font = pygame.font.Font(None, 40)
-            text = font.render('Надеюсь, ещё увидимся'.format(self.count), True, (255, 215, 0))
-            text_x = 130
-            text_y = 260
-            screen.blit(text, (text_x, text_y))
-        else:
-            font = pygame.font.Font(None, 40)
-            text = font.render('хм, аж {} очков'.format(self.count), True, 'red')
-            text_x = 130
-            text_y = 150
-            screen.blit(text, (text_x, text_y))
+        elif self.winner == 'o':
+            text = font.render('"O" is winner', True, (225, 0, 0))
 
-            font = pygame.font.Font(None, 70)
-            text = font.render('пока'.format(self.count), True, 'red')
-            text_x = 200
-            text_y = 220
-            screen.blit(text, (text_x, text_y))
+        elif self.winner == '-':
+            text = font.render('ничья', True, (0, 255, 0))
 
-        pygame.display.flip()
-        clock.tick(0.5)
+        text_x = width // 2 - text.get_width() // 2
+        text_y = height // 2 - text.get_height() // 2
+        screen.blit(text, (text_x, text_y))
+        font_1 = pygame.font.Font(None, 50)
+        text_reset = font_1.render('заново', True, (100, 200, 100))
+        screen.blit(text_reset, (190, 335))
+        pygame.draw.rect(screen, (100, 200, 100), (185, 337, 131, 35), 1)
 
+    def reset(self):
+        self.board = [['-'] * self.width for _ in range(self.height)]
+        self.move = 0
+        self.rune = 'cross'
+        self.player = 0
+        self.win = False
+        self.winner = None
 
-Board_1 = Board()
+    def move_selection(self):
+        pygame.draw.line(screen, 'green', (240, 100), (240, 380), 2)
+        font = pygame.font.Font(None, 300)
+        text = font.render('2', True, (0, 0, 255))
+        text_x = 110
+        text_y = 160
+        screen.blit(text, (text_x, text_y))
+
+        font = pygame.font.Font(None, 300)
+        text = font.render('1', True, (255, 0, 0))
+        text_x = 270
+        text_y = 160
+        screen.blit(text, (text_x, text_y))
+
+    def opponent(self):
+        if self.player == 'o':
+            self.opozition = 'x'
+            self.move += 1
+            if self.move == 1:
+                if self.player in self.board[1][0] or self.player in self.board[2][0] or\
+                        self.player in self.board[2][1]:
+                    self.cross_zero((2, 0))
+                elif self.player in self.board[0][1] or self.player in self.board[0][2] or\
+                        self.player in self.board[1][2]:
+                    self.cross_zero((0, 2))
+                elif self.player in self.board[2][2]:
+                    self.cross_zero((2, 0))
+                elif self.player in self.board[1][1]:
+                    self.cross_zero((2, 2))
+            elif self.move == 2:
+                if self.board[2][0] == self.opozition and self.board[1][0] == '-':
+                    self.cross_zero((0, 1))
+                if self.board[0][2] == self.opozition and self.board[0][1] == '-':
+                    self.cross_zero((1, 0))
+                elif self.board[1].count(self.player) == 2 and self.board[1].count(self.opozition) == 0:
+                    if self.board[1][0] == '-':
+                        self.cross_zero((0, 1))
+                    elif self.board[1][1] == '-':
+                        self.cross_zero((1, 1))
+                    else:
+                        self.cross_zero((2, 1))
+                elif self.board[0][1] == self.board[1][1] == self.player:
+                    self.cross_zero((1, 2))
+                elif self.board[1][1] == self.board[2][1] == self.player:
+                    self.cross_zero((1, 0))
+                elif self.board[0][1] == self.board[2][1] == self.player:
+                    self.cross_zero((1, 1))
+                elif self.player == self.board[0][1] and self.player == self.board[1][0]:
+                    self.cross_zero((1, 1))
+                elif self.board[2][2] == '-':
+                    self.cross_zero((2, 2))
+                elif self.board[2][0] == '-':
+                    self.cross_zero((0, 2))
+                elif self.board[0][2] == '-':
+                    self.cross_zero((2, 0))
+            elif self.move == 3:
+                if self.board[1][0] == self.opozition and self.board[2][0] == '-':
+                    self.cross_zero((0, 2))
+                elif self.board[1][0] == '-' and self.board[2][0] == self.opozition:
+                    self.cross_zero((0, 1))
+                elif self.board[0][2] == self.board[2][2] == self.opozition and self.board[1][2] == '-':
+                    self.cross_zero((2, 1))
+                elif self.board[0][2] == self.board[1][2] == self.opozition and self.board[2][2] == '-':
+                    self.cross_zero((2, 2))
+                elif self.board[1][2] == self.board[2][2] == self.opozition and self.board[0][2] == '-':
+                    self.cross_zero((2, 0))
+                elif self.board[2].count(self.opozition) == 2 and self.board[2].count(self.player) == 0:
+                    if self.board[2][0] == '-':
+                        self.cross_zero((0, 2))
+                    elif self.board[2][1] == '-':
+                        self.cross_zero((1, 2))
+                    else:
+                        self.cross_zero((2, 2))
+                elif self.board[2][0] == self.opozition and self.board[1][0] == '-':
+                    self.cross_zero((0, 1))
+                elif self.board[0][2] == self.opozition and self.board[0][1] == '-':
+                    self.cross_zero((1, 0))
+                elif self.board[1].count(self.player) == 2 and self.board[1].count(self.opozition) == 0:
+                    if self.board[1][0] == '-':
+                        self.cross_zero((0, 1))
+                    elif self.board[1][1] == '-':
+                        self.cross_zero((1, 1))
+                    else:
+                        self.cross_zero((2, 1))
+                elif self.board[0][0] == self.board[1][1] == self.opozition and self.board[2][2] == '-':
+                    self.cross_zero((2, 2))
+                elif self.board[0][0] == self.board[2][2] == self.opozition and self.board[1][1] == '-':
+                    self.cross_zero((1, 1))
+                elif self.board[0][1] == self.board[1][1] == self.opozition and self.board[2][1] == '-':
+                    self.cross_zero((1, 2))
+                elif self.board[0][1] == self.board[2][1] == self.opozition and self.board[1][1] == '-':
+                    self.cross_zero((1, 1))
+                elif self.board[2][1] == self.board[1][1] == self.opozition and self.board[0][1] == '-':
+                    self.cross_zero((1, 0))
+                elif (self.board[2][0] == self.board[1][1] == self.opozition or
+                      self.board[2][0] == self.board[1][1] == self.player) and self.board[0][2] == '-':
+                    self.cross_zero((2, 0))
+                elif (self.board[0][2] == self.board[2][0] == self.opozition or
+                      self.board[0][2] == self.board[2][0] == self.player) and self.board[1][1] == '-':
+                    self.cross_zero((1, 1))
+                elif (self.board[0][2] == self.board[1][1] == self.opozition or
+                      self.board[0][2] == self.board[1][1] == self.player) and self.board[2][0] == '-':
+                    self.cross_zero((0, 2))
+                elif self.board[2][0] == '-':
+                    self.cross_zero((0, 2))
+                else:
+                    rune_guard = False
+                    for i in range(3):
+                        for j in range(3):
+                            if self.board[i][j] == '-':
+                                self.cross_zero((j, i))
+                                rune_guard = True
+                                break
+                        if rune_guard:
+                            break
+            else:
+                rune_guard = False
+                for i in range(3):
+                    for j in range(3):
+                        if self.board[i][j] == '-':
+                            self.cross_zero((j, i))
+                            rune_guard = True
+                            break
+                    if rune_guard:
+                        break
+        elif self.player == 'x':
+            pass
+
+Board_1 = Board(3, 3)
 
 if __name__ == '__main__':
     pygame.init()
-    size = width, height = 500, 400
+    size = width, height = 500, 500
     screen = pygame.display.set_mode(size)
-    screen.fill('black')
-    pygame.display.set_caption('Три в ряд')
-    Board_1.draw()
+    screen.fill(pygame.Color('black'))
+    pygame.display.set_caption('Крестики-нолики')
+    Board_1.move_selection()
     running = True
-    click = 0
-
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
-                if event.pos[0] in range(405, 495) and event.pos[1] in range(350, 370):
-                    Board_1.goodbye()
-                    running = False
-                    break
-                if click:
-                    if click == Board_1.coord(event.pos):
-                        Board_1.refresh(click)
-                        click = 0
-
-                    else:
-                        if Board_1.move(Board_1.coord(event.pos), click):
-                            Board_1.account()
-                            click = 0
+                if not Board_1.player:
+                    if event.pos[1] in range(110, 380):
+                        if event.pos[0] in range(70, 240):
+                            Board_1.player = 'x'
+                            screen.fill('black')
+                            Board_1.draw()
+                        elif event.pos[0] in range(240, 410):
+                            Board_1.player = 'o'
+                            screen.fill('black')
+                            Board_1.draw()
+                            Board_1.cross_zero((0, 0))
 
                 else:
-                    click = Board_1.coord(event.pos)
-
-        if click:
-            Board_1.wait_move(click)
-
+                    if Board_1.cross_zero(Board_1.coord(event.pos)):
+                        Board_1.opponent()
+                    if Board_1.chech_win():
+                        if event.pos[0] in range(185, 185 + 131) and event.pos[1] in range(337, 337 + 35):
+                            screen.fill('black')
+                            Board_1.reset()
+                            Board_1.move_selection()
         clock.tick(fps)
         pygame.display.flip()
     sys.exit()
