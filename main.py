@@ -75,7 +75,6 @@ class Board():
                 return True
         return False
 
-
     def chech_win(self):
         if self.win:
             return True
@@ -288,6 +287,7 @@ class Board():
                         break
         elif self.player == 'x':
             pass
+
 
 Board_1 = Board(3, 3)
 
