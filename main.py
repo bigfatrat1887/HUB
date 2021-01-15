@@ -251,8 +251,8 @@ class Board():
 
     def show_move(self):
         self.list_move = []
-        for i in range(self.height): #Y
-            for j in range(self.width): #X
+        for i in range(self.height):    # Y
+            for j in range(self.width):    # X
                 if self.get_neighbors((j, i)) and self.board[i][j] == '-':
                     if self.check_diagonal(j, i) or self.check_vertical(j, i) or self.check_horizontal(j, i):
                         self.list_move.append([i, j])
@@ -320,7 +320,6 @@ if __name__ == '__main__':
                         Board_1.draw()
                         Board_1.show_move()
                         rune_win = False
-
 
         clock.tick(fps)
         pygame.display.flip()
