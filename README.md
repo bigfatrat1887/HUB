@@ -1,4 +1,4 @@
-# OLD_GAMES
+# HUB/SNAKE
 # Requirements for Snake:
 # Pygame 2.0.0;
 # Random;
