@@ -342,6 +342,7 @@ class Board:
                 pygame.draw.circle(screen, self.color_dict[color_balls],
                                    [self.cellsize * x + self.cellsize // 2, self.cellsize // 2],
                                    self.cellsize // 2 - 5)
+
     def rebuild(self, list_point):
         for i in range(len(list_point)):
             for j in range(len(list_point) - i - 1):
