@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/.idea/MAIN_HUB.iml" filepath="$PROJECT_DIR$/.idea/MAIN_HUB.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/SNAKE.iml" filepath="$PROJECT_DIR$/.idea/SNAKE.iml" />
     </modules>
   </component>
 </project>
