@@ -2,6 +2,7 @@ import time
 import pygame
 import os
 import sys
+import subprocess
 from PyQt5 import uic, QtGui
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
@@ -68,35 +69,28 @@ class HUB(QWidget):
         # ВАЖНАЯ ПОМЕТКА \\\\
         # это НЕ костыль, если сделать все сразу, оно будет оперировать из папки с хабом
         if name == "SNK":
-            self.showMinimized()
             os.chdir(f"{start_dir}\HUB_data\WData\SNAKE")
-            os.system("SNAKE.exe")
-            self.showMaximized()
+            subpro = subprocess.Popen([r"SNAKE.exe"])
             os.chdir(start_dir)
         elif name == "TTR":
-            self.showMinimized()
             os.chdir(f"{start_dir}\HUB_data\WData\TETRIS")
-            os.system("TETRIS.exe")
-            self.showMaximized()
+            subpro = subprocess.Popen([r"TETRIS.exe"])
             os.chdir(start_dir)
         elif name == "REV":
-            self.showMinimized()
             os.chdir(f"{start_dir}\HUB_data\WData\REVERSI")
-            os.system("main.exe")
-            self.showMaximized()
+            subpro = subprocess.Popen([r"main.exe"])
             os.chdir(start_dir)
         elif name == "TTT":
-            self.showMinimized()
             os.chdir(f"{start_dir}\HUB_data\WData\CROSS")
-            os.system("main.exe")
-            self.showMaximized()
+            subpro = subprocess.Popen([r"main.exe"])
             os.chdir(start_dir)
         elif name == "TIR":
-            self.showMinimized()
             os.chdir(f"{start_dir}\HUB_data\WData\THREEINROW")
-            os.system("main.exe")
-            self.showMaximized()
+            subpro = subprocess.Popen([r"main.exe"])
             os.chdir(start_dir)
+        while subpro.poll() is None:
+            self.showMinimized()
+        self.showMaximized()
 
 
 if __name__ == "__main__":
