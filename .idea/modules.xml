@@ -5,6 +5,7 @@
       <module fileurl="file://$PROJECT_DIR$/.idea/MAIN_HUB.iml" filepath="$PROJECT_DIR$/.idea/MAIN_HUB.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/SNAKE.iml" filepath="$PROJECT_DIR$/.idea/SNAKE.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/TETRIS.iml" filepath="$PROJECT_DIR$/.idea/TETRIS.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/programm.iml" filepath="$PROJECT_DIR$/.idea/programm.iml" />
     </modules>
   </component>
 </project>
